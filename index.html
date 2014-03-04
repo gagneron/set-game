@@ -1,0 +1,155 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<title>Play Set</title>
+	<meta charset="UTF-8">
+	<meta name="author" content="Rudy Gagneron">
+    <meta name="description" content="Play the classic card game Set online!">
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <script type="text/javascript" src="js/underscore-min.js"></script>
+    <style type="text/css">
+    	html, body, p, div, h1,h2{margin: 0; padding: 0;}
+    	h1{text-align: center;}
+    	.container{
+    		width: 90%;
+    		max-width: 1100px;
+    		margin: 0 auto;
+    	}
+
+    	#gameboard{
+    		min-height: 400px;
+    		width: 100%;
+    		border: 2px solid black;
+    	}
+
+    	.card{
+			border:2px solid red;
+			border-radius: 10px;
+			display:inline-block;
+			height:140px;
+			width:240px;
+			text-align:center;
+			margin:10px;
+		}
+
+    	.cardImage{ 
+    		width:70px;
+			height:110px;
+			background-size: 80px 135px;
+			display: inline-block;
+    	}
+
+    	.purpleCard{
+			filter: hue-rotate(270deg);
+			-webkit-filter: hue-rotate(270deg);
+			-moz-filter: hue-rotate(270deg);
+			-o-filter: hue-rotate(270deg);
+			-ms-filter: hue-rotate(270deg);				
+		}
+		.redCard{
+			/*background-color:rgb(253, 75, 75);*/
+		}
+		.greenCard{
+			filter: hue-rotate(90deg);
+			-webkit-filter: hue-rotate(90deg);
+			-moz-filter: hue-rotate(90deg);
+			-o-filter: hue-rotate(90deg);
+			-ms-filter: hue-rotate(90deg);
+		}
+		
+		.clear-diamond{background-image: url('img/clear-diamond.png');}
+		.shaded-diamond{background-image: url('img/shade-diamond.png');}
+		.solid-diamond{background-image: url('img/solid-diamond.png');}
+		.clear-squiggle{background-image: url('img/clear-squiggle.png');}
+		.shaded-squiggle{background-image: url('img/shade-squiggle.png');}
+		.solid-squiggle{background-image: url('img/solid-squiggle.png');}
+		.clear-oval{background-image: url('img/clear-oval.png');}
+		.shaded-oval{background-image: url('img/shade-oval.png');}
+		.solid-oval{background-image: url('img/solid-oval.png');}
+
+
+
+    </style>
+</head>
+<body>
+	<div class="container">
+		<h1>Play Set</h1>
+		<div id="gameboard">
+
+
+		</div><!-- end of gameboard -->
+	</div> <!-- end of container -->
+	<script type="text/javascript">
+
+		function Card(id) {
+			var colors = ["green", "purple", "red"],
+				numbers = [1, 2, 3],
+				shades = ['clear', 'shaded', 'solid'],
+				shapes = ['diamond', 'oval', 'squiggle'];
+
+			this.initialize = function(id){
+				this.color = colors[Math.floor(id%81/27)]; // color will change every 27 cards
+				this.number = numbers[Math.floor(id%27/9)];
+				this.shade = shades[Math.floor(id%9/3)];
+				this.shape = shapes[Math.floor(id%3)];
+				this.id = id;
+			}
+			this.initialize(id);
+		}
+
+		// function Deck(){
+		// 	var cards = _.range(1,82);
+		// 	cards = _.shuffle(cards);
+		// 	this.cards = _.map(cards, function(id){return new Card(id);});
+		// }
+
+		function Play(){
+			this.deck = "empty deck";
+			this.activeCards = "none";
+
+			this.makeDeck = function(){
+				var cards = _.range(1,82);
+				cards = _.shuffle(cards);
+				this.deck = _.map(cards, function(id){return new Card(id);});
+			};
+			this.deal = function(){
+
+				this.activeCards = this.deck.splice(0,12); // pick out 12 cards
+				var gameboard = document.getElementById("gameboard");
+				var cardDiv, // the div that will represent a playing card
+					imageClass; // the class name that will be given for the card's picture
+
+				for(var i = 0; i < this.activeCards.length; i++){
+					// create a blank card and attach it to the gameboard
+					cardDiv = document.createElement("div");
+					cardDiv.className = "card";
+					gameboard.appendChild(cardDiv);
+
+					// add the images to the card
+					for(var j = 0; j < this.activeCards[i].number; j++){
+						imageDiv = document.createElement("div");
+						imageDiv.className = "cardImage ";
+						imageDiv.className += this.activeCards[i].shade+"-"+this.activeCards[i].shape+" "+this.activeCards[i].color+"Card"; // producing class names that describe the card image
+						cardDiv.appendChild(imageDiv);
+					}
+
+					console.log('hi');
+
+				}
+			};
+
+			this.displayDeck = function(){
+
+			}
+
+			this.makeDeck();
+		}
+
+
+		var play = new Play();
+		play.deal();
+
+	</script>
+</body>
+</html>
