@@ -31,6 +31,7 @@
 			width:240px;
 			text-align:center;
 			margin:10px;
+			background-color: #FFFBFB;
 		}
 
     	.cardImage{ 
@@ -68,7 +69,7 @@
 		.shaded-oval{background-image: url('img/shade-oval.png');}
 		.solid-oval{background-image: url('img/solid-oval.png');}
 
-
+		.selected{background-color: #CCEEDD;}
 
     </style>
 </head>
@@ -79,46 +80,52 @@
 
 
 		</div><!-- end of gameboard -->
+		<button id="button" type="button">Solutions</button>
+		<div id="solutions">
+
+		</div>
 	</div> <!-- end of container -->
+
 	<script type="text/javascript">
 
-		function Card(id) {
-			var colors = ["green", "purple", "red"],
-				numbers = [1, 2, 3],
-				shades = ['clear', 'shaded', 'solid'],
-				shapes = ['diamond', 'oval', 'squiggle'];
+		function Card(id, properties) {
+			this.id = id;
+			this.info = {
+				color: properties.colors[Math.floor(id%81/27)], // color will change every 27 cards
+				number: properties.numbers[Math.floor(id%27/9)],
+				shade: properties.shades[Math.floor(id%9/3)],
+				shape: properties.shapes[Math.floor(id%3)]
+			};
 
-			this.initialize = function(id){
-				this.color = colors[Math.floor(id%81/27)]; // color will change every 27 cards
-				this.number = numbers[Math.floor(id%27/9)];
-				this.shade = shades[Math.floor(id%9/3)];
-				this.shape = shapes[Math.floor(id%3)];
-				this.id = id;
-			}
-			this.initialize(id);
 		}
 
-		// function Deck(){
-		// 	var cards = _.range(1,82);
-		// 	cards = _.shuffle(cards);
-		// 	this.cards = _.map(cards, function(id){return new Card(id);});
-		// }
-
-		function Play(){
+		function Game(){
 			this.deck = "empty deck";
 			this.activeCards = "none";
+			this.solutions = "none";
 
 			this.makeDeck = function(){
+
+				var properties = {
+					colors: ["green", "purple", "red"],
+					numbers: [1, 2, 3],
+					shades: ['clear', 'shaded', 'solid'],
+					shapes: ['diamond', 'oval', 'squiggle']
+				};
+
+
 				var cards = _.range(1,82);
 				cards = _.shuffle(cards);
-				this.deck = _.map(cards, function(id){return new Card(id);});
+				this.deck = _.map(cards, function(id){return new Card(id, properties);});
 			};
+
 			this.deal = function(){
 
 				this.activeCards = this.deck.splice(0,12); // pick out 12 cards
 				var gameboard = document.getElementById("gameboard");
+				gameboard.innerHTML = ""; // resets the game
 				var cardDiv, // the div that will represent a playing card
-					imageClass; // the class name that will be given for the card's picture
+					imageDiv; // the class name that will be given for the card's picture
 
 				for(var i = 0; i < this.activeCards.length; i++){
 					// create a blank card and attach it to the gameboard
@@ -127,28 +134,152 @@
 					gameboard.appendChild(cardDiv);
 
 					// add the images to the card
-					for(var j = 0; j < this.activeCards[i].number; j++){
+					for(var j = 0; j < this.activeCards[i].info.number; j++){
 						imageDiv = document.createElement("div");
-						imageDiv.className = "cardImage ";
-						imageDiv.className += this.activeCards[i].shade+"-"+this.activeCards[i].shape+" "+this.activeCards[i].color+"Card"; // producing class names that describe the card image
+						imageDiv.className = "cardImage "+this.activeCards[i].info.shade+"-"+this.activeCards[i].info.shape+" "+this.activeCards[i].info.color+"Card"; // producing class names that describe the card image
 						cardDiv.appendChild(imageDiv);
 					}
-
-					console.log('hi');
-
 				}
 			};
 
-			this.displayDeck = function(){
 
+			this.solve = function(){
+				// var start = new Date();
+				// console.log(start.getTime());
+
+				var threeCardSet = [],
+					attributes,
+					vaconditionsMet = 0,
+					solutions = [];
+
+				// console.log(this.activeCards);
+				// I NEED TO FIX THIS DISASTROUS 5 NESTED LOOP SEQUENCE!!!
+				var counter = 0;
+				var numCards = this.activeCards.length;
+				for(var card1 = 0; card1 < numCards - 2; card1++){
+
+					for(var card2 = card1+1; card2 < numCards- 1; card2++){
+
+
+						for(var card3 = card2+1; card3 < numCards; card3++){ // looping through the 3rd card
+							
+
+							threeCardSet = [this.activeCards[card1], this.activeCards[card2], this.activeCards[card3]];
+							
+							conditionsMet = 0;
+
+							for(attribute in threeCardSet[0].info){ // for each attribute (color, shape, etc.)
+								attributes = []; // empty out attributes
+								for(card in threeCardSet){			// for each card in the 3 card set
+									
+									attributes.push(threeCardSet[card].info[attribute]); 
+									counter++;
+
+								}
+								// if neither "all attributes are equal" nor are they "all distinct" then break and try to find another 3rd card
+								if(!(((attributes[0] == attributes[1]) && (attributes[1] == attributes[2])) || 
+									((attributes[0] != attributes[1]) && (attributes[1] != attributes[2]) && (attributes[0] != attributes[2]))
+									)){
+									
+									break;	
+								} else{
+									conditionsMet++;
+								}
+								
+							}
+							if (conditionsMet == 4){
+								// console.log(threeCardSet);;
+								solutions.push(threeCardSet);
+								break;
+							}
+						}
+					}	
+				}
+				console.log(counter);
+				
+				// var end = new Date();
+				// console.log(end.getTime());
+				// console.log("time = "+(end.getTime() - start.getTime()+"ms"));
+
+				this.solutions = solutions;
 			}
+
+			// this.showAnswers = function(){
+			// 	return solve(this.activeCards);
+			// }
 
 			this.makeDeck();
 		}
 
+		
 
-		var play = new Play();
-		play.deal();
+		Game.prototype.showSolutions = function(){
+
+			var solutionsDiv = document.getElementById("solutions");
+			for(solution in this.solutions){  // for each set of solutions create a div row called set
+
+				console.log((this.solutions[solution]).sort(function(obj1,obj2){
+					return obj1.info.number - obj2.info.number;
+				}));
+
+				// this.solutions.sort(function(a,b){return a.info})
+				var set = document.createElement('div');
+				set.className = "set";
+				solutionsDiv.appendChild(set);
+				var solutionLength = this.solutions[solution].length;
+				for(var i = 0; i < solutionLength; i++){ 
+					// create a blank card and attach it to the gameboard 
+					cardDiv = document.createElement("div");
+					cardDiv.className = "card";
+					set.appendChild(cardDiv);
+
+					// console.log(this.solutions[solution][i]);
+				// add the images to the card
+					for(var j = 0; j < this.solutions[solution][i].info.number; j++){
+						imageDiv = document.createElement("div");
+						imageDiv.className = "cardImage "+this.solutions[solution][i].info.shade+"-"+this.solutions[solution][i].info.shape+" "+this.solutions[solution][i].info.color+"Card"; // producing class names that describe the card image
+						cardDiv.appendChild(imageDiv);
+					}	
+				}
+			}
+		}
+
+
+
+
+		var game = new Game();
+		game.deal();
+		game.solve();
+		game.showSolutions();
+		// game.showAnswers();
+
+	</script>
+	<script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript">
+		// var card = document.getElementById('gameboard').getElementsByClassName('card');
+		// var cardLength = card.length;
+
+		// for(var i = 0; i < cardLength; i++){
+		// 	card[i].onclick = function(){
+		// 		// e.style.backgroundColor = '#faefef';
+		// 		addClass(this);
+		// 	};
+			
+		// }
+		// function addClass(e){
+		// 	if()
+		// 	e.className += ' selected';
+		// }
+
+		$(document).ready(function(){
+
+			$("#gameboard .card").click(function(){
+				$(this).toggleClass("selected");
+			});
+
+
+		});
+
 
 	</script>
 </body>
