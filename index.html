@@ -10,11 +10,15 @@
     <script type="text/javascript" src="js/underscore-min.js"></script>
     <style type="text/css">
     	html, body, p, div, h1,h2{margin: 0; padding: 0;}
-    	h1{text-align: center;}
+    	h1{text-align: center; display: inline-block;}
     	.container{
     		width: 90%;
     		max-width: 1100px;
     		margin: 0 auto;
+    	}
+
+    	#timer{
+    		display: inline-block;
     	}
 
     	#gameboard{
@@ -76,6 +80,7 @@
 <body>
 	<div class="container">
 		<h1>Play Set</h1>
+		<div id="timer"></div>
 		<div id="gameboard">
 
 
@@ -130,7 +135,7 @@
 				for(var i = 0; i < this.activeCards.length; i++){
 					// create a blank card and attach it to the gameboard
 					cardDiv = document.createElement("div");
-					cardDiv.className = "card";
+					cardDiv.className = "card "+"card-"+this.activeCards[i].id;
 					gameboard.appendChild(cardDiv);
 
 					// add the images to the card
@@ -143,7 +148,7 @@
 			};
 
 
-			this.solve = function(){
+			this.getSolutions = function(){
 				// var start = new Date();
 				// console.log(start.getTime());
 
@@ -160,18 +165,17 @@
 
 					for(var card2 = card1+1; card2 < numCards- 1; card2++){
 
-
 						for(var card3 = card2+1; card3 < numCards; card3++){ // looping through the 3rd card
 							
-
 							threeCardSet = [this.activeCards[card1], this.activeCards[card2], this.activeCards[card3]];
 							
 							conditionsMet = 0;
 
 							for(attribute in threeCardSet[0].info){ // for each attribute (color, shape, etc.)
 								attributes = []; // empty out attributes
+								
 								for(card in threeCardSet){			// for each card in the 3 card set
-									
+	
 									attributes.push(threeCardSet[card].info[attribute]); 
 									counter++;
 
@@ -182,75 +186,128 @@
 									)){
 									
 									break;	
-								} else{
-									conditionsMet++;
-								}
+								} 
+								else{conditionsMet++;}
 								
 							}
 							if (conditionsMet == 4){
-								// console.log(threeCardSet);;
 								solutions.push(threeCardSet);
 								break;
 							}
 						}
 					}	
 				}
-				console.log(counter);
 				
 				// var end = new Date();
 				// console.log(end.getTime());
 				// console.log("time = "+(end.getTime() - start.getTime()+"ms"));
 
 				this.solutions = solutions;
+				// console.log(solutions);
 			}
 
-			// this.showAnswers = function(){
-			// 	return solve(this.activeCards);
-			// }
+			this.showSolutions = function(){
+
+				var solutionsDiv = document.getElementById("solutions");
+				solutionsDiv.innerHTML = "";
+				for(solution in this.solutions){  // for each set of solutions create a div row called set
+
+					this.solutions[solution].sort(function(obj1,obj2){ // sort cards by number
+						return obj1.info.number - obj2.info.number;
+					});
+
+					
+					var set = document.createElement('div');
+					set.className = "set";
+					solutionsDiv.appendChild(set);
+					var solutionLength = this.solutions[solution].length;
+
+					for(var i = 0; i < solutionLength; i++){ 
+						// create a blank card and attach it to the gameboard 
+						cardDiv = document.createElement("div");
+						cardDiv.className = "card "+ "card-"+this.solutions[solution][i].id;
+						set.appendChild(cardDiv);
+
+					// add the images to the card
+						for(var j = 0; j < this.solutions[solution][i].info.number; j++){
+							imageDiv = document.createElement("div");
+							imageDiv.className = "cardImage "+this.solutions[solution][i].info.shade+"-"+this.solutions[solution][i].info.shape+" "+this.solutions[solution][i].info.color+"Card"; // producing class names that describe the card image
+							cardDiv.appendChild(imageDiv);
+						}	
+					}
+				}
+			}
+
+
+			this.checkForSet = function(possibleSet){
+				// console.log('in!');
+				var possibleSet = possibleSet.map(function(number){return parseInt(number,10);}); // strings to ints
+				possibleSet = possibleSet.sort(function(a,b){return a-b});;
+				
+				var correctSets = [];
+				for(var i = 0; i<this.solutions.length; i++){
+					
+					var oneSet = [];
+					for(var j = 0; j < this.solutions[i].length; j++){
+						oneSet.push(parseInt(this.solutions[i][j].id));
+						
+					}
+
+					oneSet = oneSet.sort(function(a,b){return a-b});;
+					if(identicalIntArrays(possibleSet,oneSet)){
+						console.log("its a set!");
+
+
+						var game = new Game();
+						return true;
+
+					} 
+					correctSets.push(oneSet);
+				}
+				
+				
+			}
+
+			var identicalIntArrays = function (a, b) {
+			    var i = a.length;
+			    if (i != b.length) return false;
+			    while (i--) {
+			        if (a[i] !== b[i]) return false;
+			    }
+			    return true;
+			};
+
+			this.startTimer = function(){
+					var start = new Date().getTime(),
+				     	elapsed = '0.0';
+
+				window.setInterval(function()
+				{
+				    var time = new Date().getTime() - start;
+
+				    elapsed = Math.floor(time / 100) / 10;
+				    if(Math.round(elapsed) == elapsed) { elapsed += '.0'; }
+
+				    var timer = document.getElementById("timer");
+				    timer.innerHTML = elapsed;
+
+				}, 100);
+			}
 
 			this.makeDeck();
 		}
 
+		//compare two arrays of integers to see if they are equal
+
 		
 
-		Game.prototype.showSolutions = function(){
-
-			var solutionsDiv = document.getElementById("solutions");
-			for(solution in this.solutions){  // for each set of solutions create a div row called set
-
-				console.log((this.solutions[solution]).sort(function(obj1,obj2){
-					return obj1.info.number - obj2.info.number;
-				}));
-
-				// this.solutions.sort(function(a,b){return a.info})
-				var set = document.createElement('div');
-				set.className = "set";
-				solutionsDiv.appendChild(set);
-				var solutionLength = this.solutions[solution].length;
-				for(var i = 0; i < solutionLength; i++){ 
-					// create a blank card and attach it to the gameboard 
-					cardDiv = document.createElement("div");
-					cardDiv.className = "card";
-					set.appendChild(cardDiv);
-
-					// console.log(this.solutions[solution][i]);
-				// add the images to the card
-					for(var j = 0; j < this.solutions[solution][i].info.number; j++){
-						imageDiv = document.createElement("div");
-						imageDiv.className = "cardImage "+this.solutions[solution][i].info.shade+"-"+this.solutions[solution][i].info.shape+" "+this.solutions[solution][i].info.color+"Card"; // producing class names that describe the card image
-						cardDiv.appendChild(imageDiv);
-					}	
-				}
-			}
-		}
+	
 
 
 
 
-		var game = new Game();
-		game.deal();
-		game.solve();
-		game.showSolutions();
+
+		// game.showSolutions();
 		// game.showAnswers();
 
 	</script>
@@ -271,14 +328,53 @@
 		// 	e.className += ' selected';
 		// }
 
-		$(document).ready(function(){
+		// $(document).ready(function(){
 
-			$("#gameboard .card").click(function(){
-				$(this).toggleClass("selected");
+			var game = new Game();
+			game.deal();
+			game.startTimer();
+			game.getSolutions();
+
+
+			var numCardsPicked = 0;
+			$("#gameboard").on("click", ".card", function(){
+				console.log("hello");
+				console.log($(this));
+				
+				if(!$(this).hasClass("selected") && numCardsPicked < 3){
+					$(this).addClass("selected");
+					numCardsPicked++;
+					console.log(numCardsPicked);
+
+					if(numCardsPicked == 3){
+						// prepare an array of card numbers
+						var cardNumbers = [];
+						for(var i = 0; i < $(".selected").length; i++){
+							cardNumbers.push($(".selected")[i].className.match(/\d\d*/g)[0])
+						}
+						if(game.checkForSet(cardNumbers)){
+							numCardsPicked = 0;
+							game.deal();
+							game.getSolutions();
+						};
+
+					}
+				}
+				else if($(this).hasClass("selected")){
+					$(this).removeClass("selected");
+					numCardsPicked--;
+					// console.log(numCardsPicked);
+				}
+				
+			});
+
+			$(".container").on("click", "button", function(){
+				game.showSolutions(); 
+				// $(this).prop("disabled","true");
 			});
 
 
-		});
+		// });
 
 
 	</script>
